@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICHIGEKI 一撃 — One Strike</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game">
+  <canvas id="canvas" width="1280" height="720"></canvas>
+
+  <div id="hud" class="hidden">
+    <div class="hud-side">
+      <div class="hud-name p1">AKAONI</div>
+      <div class="hud-pips" id="pips-p1"></div>
+      <div class="hud-blocks" id="blocks-p1"></div>
+    </div>
+    <div id="hud-round">ROUND 1</div>
+    <div class="hud-side right">
+      <div class="hud-name p2">KUROGANE</div>
+      <div class="hud-pips" id="pips-p2"></div>
+      <div class="hud-blocks" id="blocks-p2"></div>
+    </div>
+    <button id="btn-mute" title="toggle sound">♪</button>
+  </div>
+
+  <div id="banner" class="hidden"></div>
+
+  <div id="move-panel" class="hidden">
+    <div id="block-row">
+      <button id="btn-block"><span class="bb-kanji">守</span><span class="bb-label">ADD BLOCK</span></button>
+      <div id="block-hint">One per duel — turns a losing exchange into a draw. Wasted if you don't lose. <kbd>B</kbd></div>
+    </div>
+    <div id="move-row">
+      <button class="move-btn" data-move="jump">JUMP <span class="kanji">跳</span><small>kills crouch · <kbd>1</kbd></small></button>
+      <button class="move-btn" data-move="lunge">LUNGE <span class="kanji">突</span><small>kills jump · <kbd>2</kbd></small></button>
+      <button class="move-btn" data-move="crouch">CROUCH <span class="kanji">伏</span><small>kills lunge · <kbd>3</kbd></small></button>
+    </div>
+  </div>
+
+  <div id="title-screen">
+    <img class="title-char left" src="assets/sprites/p1_front.png" alt="Akaoni">
+    <img class="title-char right" src="assets/sprites/p2_front.png" alt="Kurogane">
+    <div class="title-inner">
+      <h1>ICHIGEKI</h1>
+      <div class="jp">一撃 · ONE STRIKE</div>
+      <p class="tagline">Two samurai. One blow decides. A duel for the lord.</p>
+      <button id="btn-vs-ai" class="big">DUEL THE AI</button>
+      <button id="btn-vs-human" class="big" disabled>VS PLAYER — SOON</button>
+      <div class="howto">
+        JUMP kills CROUCH · CROUCH kills LUNGE · LUNGE kills JUMP<br>
+        First to 2 rounds wins the duel. Each samurai carries one BLOCK —<br>
+        it turns a losing exchange into a draw. Win or waste it.
+      </div>
+    </div>
+  </div>
+
+  <div id="end-screen" class="hidden">
+    <img id="end-portrait" src="" alt="">
+    <h1 id="end-title"></h1>
+    <div class="jp" id="end-jp"></div>
+    <div id="end-sub"></div>
+    <div class="end-buttons">
+      <button id="btn-rematch" class="big">REMATCH</button>
+      <button id="btn-title" class="big">TITLE</button>
+    </div>
+  </div>
+
+  <div id="err" class="hidden"></div>
+</div>
+<script src="js/logic.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
