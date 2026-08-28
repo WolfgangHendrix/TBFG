@@ -15,7 +15,7 @@
   const $ = id => document.getElementById(id);
 
   // ---------- assets ----------
-  const IMG = {};
+  const IMG = { p1: {}, p2: {} };
   function loadImage(src) {
     return new Promise((res, rej) => {
       const img = new Image();
@@ -25,11 +25,40 @@
     });
   }
   async function loadAssets() {
-    [IMG.bg, IMG.p1, IMG.p2] = await Promise.all([
-      loadImage('assets/images/tbfg_bg_00.png'),
-      loadImage('assets/sprites/p1_side.png'),
-      loadImage('assets/sprites/p2_side.png'),
-    ]);
+    const list = [
+      ['bg', 'assets/images/tbfg_bg_00.png'],
+      ['p1_idle', 'assets/images/tbfg_p1_idle.png'],
+      ['p1_idle_fight', 'assets/images/tbfg_p1_idle_fight.png'],
+      ['p1_idle_fwd', 'assets/images/tbfg_p1_idle_fwd.png'],
+      ['p1_block', 'assets/images/tbfg_p1_block_00.png'],
+      ['p1_blockknock', 'assets/images/tbfg_p1_blockknockback_00.png'],
+      ['p1_defeat', 'assets/images/tbfg_p1_defeated_00.png'],
+      ['p1_lunge_0', 'assets/images/tbfg_p1_forwardlunge_00.png'],
+      ['p1_lunge_1', 'assets/images/tbfg_p1_forwardlunge_01.png'],
+      ['p1_jump_0', 'assets/images/tbfg_p1_jump_00.png'],
+      ['p1_jump_1', 'assets/images/tbfg_p1_jump_01.png'],
+      ['p1_crouch_0', 'assets/images/tbfg_p1_crouch_00.png'],
+      ['p1_crouch_1', 'assets/images/tbfg_p1_crouch_01.png'],
+      ['p2_idle', 'assets/images/tbfg_p2_idle.png'],
+      ['p2_idle_fight', 'assets/images/tbfg_p2_idle_fight.png'],
+      ['p2_idle_fwd', 'assets/images/tbfg_p2_idle_fwd.png'],
+      ['p2_block', 'assets/images/tbfg_p2_block_00.png'],
+      ['p2_blockknock', 'assets/images/tbfg_p2_blockknockback_00.png'],
+      ['p2_defeat', 'assets/images/tbfg_p2_defeated_00.png'],
+      ['p2_lunge_0', 'assets/images/tbfg_p2_forwardlunge_00.png'],
+      ['p2_lunge_1', 'assets/images/tbfg_p2_forwardlunge_01.png'],
+      ['p2_jump_0', 'assets/images/tbfg_p2_jump_00.png'],
+      ['p2_jump_1', 'assets/images/tbfg_p2_jump_01.png'],
+      ['p2_crouch_0', 'assets/images/tbfg_p2_crouch_00.png'],
+      ['p2_crouch_1', 'assets/images/tbfg_p2_crouch_01.png'],
+      ];
+    const imgs = await Promise.all(list.map(item => loadImage(item[1])));
+    list.forEach((item, i) => {
+      const k = item[0];
+      if (k === 'bg') IMG.bg = imgs[i];
+      else if (k.startsWith('p1_')) IMG.p1[k.slice(3)] = imgs[i];
+      else if (k.startsWith('p2_')) IMG.p2[k.slice(3)] = imgs[i];
+    });
   }
 
   // ---------- tweens & timers (game-time, driven by rAF) ----------
@@ -67,34 +96,37 @@
   }
 
   // ---------- actors ----------
-  // x/y is the feet anchor (bottom-center). Sprites natively face left,
-  // so faceRight mirrors horizontally.
-  function makeActor(name, img, homeX, faceRight) {
+  // x/y is the feet anchor (bottom-center).
+  function makeActor(name, imgs, homeX, faceRight, nativeFaceRight) {
     return {
-      name, img, homeX, faceRight,
+      name, imgs, homeX, faceRight, nativeFaceRight: !!nativeFaceRight,
       x: homeX, y: GROUND,
       sx: 1, sy: 1, rot: 0, alpha: 1,
       idle: true, idlePhase: Math.random() * 6,
+      state: 'idle',
     };
   }
   let A1 = null, A2 = null;
 
   const ghosts = []; // lunge afterimages
   function spawnGhost(a) {
-    ghosts.push({ img: a.img, x: a.x, y: a.y, faceRight: a.faceRight, sx: a.sx, sy: a.sy, rot: a.rot, alpha: 0.4 });
+    const img = a.imgs[a.state] || a.imgs.idle;
+    ghosts.push({ img, x: a.x, y: a.y, faceRight: a.faceRight, nativeFaceRight: a.nativeFaceRight, sx: a.sx, sy: a.sy, rot: a.rot, alpha: 0.4 });
   }
 
   function drawActor(a, t) {
     if (a.alpha <= 0) return;
-    const s = CHAR_H / a.img.height;
+    const img = a.img || a.imgs[a.state] || a.imgs.idle;
+    const s = CHAR_H / img.height;
     let sy = a.sy;
     if (a.idle) sy *= 1 + Math.sin(t / 480 + a.idlePhase) * 0.012;
+    const flip = a.faceRight === a.nativeFaceRight ? 1 : -1;
     ctx.save();
     ctx.globalAlpha = a.alpha;
     ctx.translate(a.x, a.y);
     ctx.rotate(a.rot);
-    ctx.scale((a.faceRight ? -1 : 1) * s * a.sx, s * sy);
-    ctx.drawImage(a.img, -a.img.width / 2, -a.img.height);
+    ctx.scale(flip * s * a.sx, s * sy);
+    ctx.drawImage(img, -img.width / 2, -img.height);
     ctx.restore();
   }
 
@@ -218,8 +250,8 @@
 
   async function startMatch() {
     match = Logic.newMatch(2, 1);
-    A1 = makeActor(NAMES[0], IMG.p1, P1_HOME, true);
-    A2 = makeActor(NAMES[1], IMG.p2, P2_HOME, false);
+    A1 = makeActor(NAMES[0], IMG.p1, P1_HOME, true, true);
+    A2 = makeActor(NAMES[1], IMG.p2, P2_HOME, false, false);
     ghosts.length = 0;
     reveal = null;
     titleScreen.classList.add('hidden');
@@ -278,13 +310,14 @@
   }
 
   async function playRound(o) {
+    A1.state = A2.state = 'idle_fight';
     await wait(300);
     reveal = { l: pickLabel(o.p1), r: pickLabel(o.p2) };
     FX.whoosh();
     const T = 640;
     await Promise.all([
-      attackAnim(A1, o.p1.move, 1, T),
-      attackAnim(A2, o.p2.move, -1, T),
+      attackAnim(A1, o.p1.move, 1, T, o.p1.block),
+      attackAnim(A2, o.p2.move, -1, T, o.p2.block),
     ]);
 
     // the clash
@@ -299,6 +332,7 @@
       const winner = o.winner === 1 ? A1 : A2;
       const loser = o.winner === 1 ? A2 : A1;
       const dir = o.winner === 1 ? 1 : -1; // loser is knocked toward their own side
+      loser.state = 'defeat';
       FX.slash();
       await Promise.all([
         tween(loser, { x: loser.x + dir * 190, rot: dir * 1.45, y: GROUND, sy: 1 }, 480, easeOut),
@@ -313,6 +347,8 @@
         await showBanner(winner.name + ' STRIKES TRUE', 'round to ' + winner.name + wastedNote(o), 1400);
       }
     } else if (o.saved) {
+      const saver = o.saved === 1 ? A1 : A2;
+      saver.state = 'blockknock';
       FX.clang();
       FX.sparks(CLASH_X, clashY, 42, '#ffe9a8');
       FX.shake(8, 220);
@@ -329,28 +365,35 @@
   }
 
   // All three attacks take exactly T ms so both fighters meet mid-screen.
-  async function attackAnim(a, move, dir, T) {
+  async function attackAnim(a, move, dir, T, isBlocking) {
     a.idle = false;
     const target = CLASH_X - dir * 80;
     if (move === 'jump') {
+      a.state = isBlocking ? 'block' : 'jump_0';
       await tween(a, { sy: 0.82 }, 120, easeOut); // crouch wind-up
+      a.state = isBlocking ? 'block' : 'jump_0';
       const rise = (T - 120) * 0.55, fall = (T - 120) * 0.45;
       await Promise.all([
         tween(a, { y: GROUND - 215, sy: 1.04 }, rise, easeOut)
-          .then(() => tween(a, { y: GROUND - 90 }, fall, easeIn)),
+          .then(() => { a.state = isBlocking ? 'block' : 'jump_1'; return tween(a, { y: GROUND - 90 }, fall, easeIn); }),
         tween(a, { x: target, rot: dir * 0.22 }, T - 120, linear),
       ]);
     } else if (move === 'lunge') {
+      a.state = isBlocking ? 'block' : 'lunge_0';
       await tween(a, { x: a.x - dir * 35, rot: -dir * 0.10 }, 200, easeOut); // lean back
+      a.state = isBlocking ? 'block' : 'lunge_1';
       const trail = (async () => {
         for (let i = 0; i < 6; i++) { spawnGhost(a); await wait(38); }
       })();
       await tween(a, { x: target + dir * 10, rot: dir * 0.16 }, T - 320, easeOut);
       await trail;
+      a.state = isBlocking ? 'block' : 'lunge_0';
       await wait(120);
     } else { // crouch
-      await tween(a, { sy: 0.60 }, 170, easeOut);
+      a.state = isBlocking ? 'block' : 'crouch_0';
+      await tween(a, { sy: 1.0 }, 170, easeOut); // Reset any scaling
       await tween(a, { x: CLASH_X - dir * 130 }, T - 290, easeInOut);
+      a.state = isBlocking ? 'block' : 'crouch_1';
       await wait(120);
     }
   }
@@ -359,11 +402,13 @@
     const loser = o.winner === 1 ? A2 : A1;
     await wait(200);
     await tween(loser, { rot: 0 }, 380, easeOut); // back on their feet
+    loser.state = 'idle';
     await returnHome();
   }
 
   async function returnHome() {
     A1.idle = A2.idle = false;
+    A1.state = A2.state = 'idle';
     await Promise.all([
       tween(A1, { x: P1_HOME, y: GROUND, rot: 0, sy: 1, sx: 1 }, 480, easeInOut),
       tween(A2, { x: P2_HOME, y: GROUND, rot: 0, sy: 1, sx: 1 }, 480, easeInOut),
@@ -378,7 +423,7 @@
     $('end-title').textContent = playerWon ? 'VICTORY' : 'DEFEAT';
     $('end-jp').textContent = playerWon ? '勝利' : '敗北';
     $('end-sub').textContent = NAMES[match.winner - 1] + ' stands alone on the field';
-    $('end-portrait').src = playerWon ? 'assets/sprites/p1_front.png' : 'assets/sprites/p2_front.png';
+    $('end-portrait').src = playerWon ? 'assets/images/tbfg_p1_idle_fwd.png' : 'assets/images/tbfg_p2_idle_fwd.png';
     endScreen.classList.remove('hidden');
   }
 

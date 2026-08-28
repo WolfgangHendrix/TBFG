@@ -1,0 +1,8 @@
+# build output and packaging staging — regenerate, never commit
+build_itch/
+dist/
+*.zip
+
+node_modules/
+.DS_Store
+Thumbs.db
