@@ -26,6 +26,27 @@ python -m http.server 8000
 Controls: click the move buttons, or keys `1` (jump) / `2` (lunge) /
 `3` (crouch) and `B` to arm the block.
 
+## Animation workshop
+
+Open `http://localhost:8000/tools/animation-editor.html` while serving the
+project from its root folder. The workshop lets you scrub and play poses,
+adjust pose scale and foot anchor, and compare each pose against the combat
+idle. Keep the game and workshop open at the same host and port, then choose
+**Save to game live** to share adjustments with the running game. Export JSON
+to back up or move calibration settings to another browser. The current P1
+and P2 calibrations are included in project defaults, so they apply after reload.
+Both fighters use a shared 80% overall size multiplier before their pose
+corrections. Frame durations in the workshop set each pose's timing share
+inside the synchronized attack, so both fighters still arrive at the clash
+together. Side idle and combat idle use paired hand-drawn inhale/exhale frames;
+those frames inherit the parent pose's scale and foot anchor to keep breathing
+from changing character size.
+
+The jump and crouch sequences now have three authored poses for both fighters.
+Open a pose directly with query parameters, for example
+`?fighter=p1&sequence=jump&frame=1` or
+`?fighter=p2&sequence=crouch&frame=1`.
+
 ## Project layout
 
 ```
@@ -37,6 +58,7 @@ js/fx.js            synthesized sound (WebAudio), particles, shake, flash
 js/main.js          rendering, animation choreography, match flow, input
 assets/images/      source art (background, character turnaround sheets)
 assets/sprites/     auto-cut character views (front/side/back, transparent)
+assets/clean/       calibrated poses, generated action in-betweens, idle breathing
 tools/cut_sprites.ps1   regenerates assets/sprites from the sheets
 ```
 
@@ -52,6 +74,28 @@ powershell -ExecutionPolicy Bypass -File tools/cut_sprites.ps1
 It strips the white background (edge flood-fill, so white costume parts
 survive), finds the three figures, and saves tight-cropped transparent PNGs.
 
+To compare the visible size of every pose, run:
+
+```
+python tools/analyze_animation_scale.py
+```
+
+This writes a calibrated contact sheet and CSV using the game defaults. To
+audit the exact values from the workshop, pass its exported JSON file:
+
+```
+python tools/analyze_animation_scale.py tbfg-animation-calibration.json
+```
+
+The battlefield uses a cloudless sunset plate with independent, moving far and
+near cloud layers, wind-swaying cloth banners, coordinated field grass, drifting
+smoke and embers, motes, and a slow sunlit shimmer. On a draw, the fighters recover at the clash point and the next
+exchange starts there, keeping the roshambo exchanges face-to-face.
+
+This writes `reports/animation_scale.png` (poses rendered at each fighter's
+fixed source-pixel scale, with side idle matched to combat-ready height) and
+`reports/animation_scale.csv` (source bounds and predicted visible heights).
+
 ## Publishing to itch.io
 
 1. Zip the contents of this folder (`index.html` must be at the zip root;
@@ -63,6 +107,6 @@ survive), finds the three figures, and saves tight-cropped transparent PNGs.
 ## Roadmap
 
 - [ ] Online multiplayer (logic.js is already pure/deterministic for this)
-- [ ] Real attack-pose sprites per move (current animation is transform-based)
+- [ ] Add authored block, recoil, and defeat animation cycles
 - [ ] Local two-player (pass-and-play with hidden picks)
 - [ ] Music loop, more SFX variety

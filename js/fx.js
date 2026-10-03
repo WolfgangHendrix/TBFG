@@ -90,6 +90,33 @@
 
     // ---------- particles ----------
     parts: [],
+    impactFlares: [],
+
+    swordClash(x, y, col) {
+      const color = col || '#ffcf70';
+      this.sparks(x, y, 38, color);
+      this.impactFlares.push({ type: 'clash', x, y, life: 0, max: 210, col: color });
+    },
+
+    woundFlash(x, y) {
+      this.impactFlares.push({ type: 'wound', x, y, life: 0, max: 170, col: '#fff0dc' });
+    },
+
+    bloodSplash(x, y, dir) {
+      // A forceful, directional spray with a few broad droplets and fine mist.
+      for (let i = 0; i < 42; i++) {
+        const spread = (Math.random() - 0.5) * 2.25;
+        const speed = 145 + Math.random() * (i < 14 ? 420 : 245);
+        const angle = spread - 0.18;
+        this.parts.push({
+          type: 'b', x: x + (Math.random() - 0.5) * 12, y: y + (Math.random() - 0.5) * 14,
+          vx: dir * Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 95 - Math.random() * 130,
+          life: 0, max: 420 + Math.random() * 420, r: 2.6 + Math.random() * (i < 12 ? 5.6 : 3.0),
+          col: i % 4 === 0 ? '#a30f20' : i % 3 === 0 ? '#d52a32' : '#72101a',
+        });
+      }
+      this.impactFlares.push({ type: 'blood', x, y, life: 0, max: 240, col: '#d52a32' });
+    },
 
     sparks(x, y, n, col) {
       n = n || 18;
@@ -125,9 +152,15 @@
         p.life += dt;
         if (p.life >= p.max) { this.parts.splice(i, 1); continue; }
         if (p.type === 's') p.vy += 1500 * s;
+        else if (p.type === 'b') { p.vy += 980 * s; p.vx *= 0.992; }
         else { p.vx *= 0.98; p.vy *= 0.97; }
         p.x += p.vx * s;
         p.y += p.vy * s;
+      }
+      for (let i = this.impactFlares.length - 1; i >= 0; i--) {
+        const flare = this.impactFlares[i];
+        flare.life += dt;
+        if (flare.life >= flare.max) this.impactFlares.splice(i, 1);
       }
       if (this.shakeT > 0) this.shakeT -= dt;
       if (this.flashA > 0) this.flashA -= dt * 0.003;
@@ -137,13 +170,24 @@
       for (const p of this.parts) {
         const k = 1 - p.life / p.max;
         if (p.type === 's') {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
           ctx.strokeStyle = p.col;
           ctx.globalAlpha = k;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.4 + k * 1.2;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x - p.vx * 0.02, p.y - p.vy * 0.02);
+          ctx.lineTo(p.x - p.vx * 0.035, p.y - p.vy * 0.035);
           ctx.stroke();
+          ctx.restore();
+        } else if (p.type === 'b') {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.96, k * 1.5);
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y, p.r * 0.72, p.r * 1.3, Math.atan2(p.vy, p.vx) + Math.PI / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         } else {
           ctx.fillStyle = '#8a7a5c';
           ctx.globalAlpha = 0.35 * k;
@@ -151,6 +195,39 @@
           ctx.arc(p.x, p.y, p.r * (2 - k), 0, 7);
           ctx.fill();
         }
+      }
+      for (const flare of this.impactFlares) {
+        const p = flare.life / flare.max;
+        const fade = 1 - p;
+        ctx.save();
+        ctx.globalCompositeOperation = flare.type === 'clash' ? 'lighter' : 'source-over';
+        if (flare.type === 'clash') {
+          const radius = 12 + p * 70;
+          const glow = ctx.createRadialGradient(flare.x, flare.y, 0, flare.x, flare.y, radius);
+          glow.addColorStop(0, `rgba(255,250,225,${0.95 * fade})`);
+          glow.addColorStop(0.18, `rgba(255,205,102,${0.72 * fade})`);
+          glow.addColorStop(1, 'rgba(255,142,37,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(flare.x - radius, flare.y - radius, radius * 2, radius * 2);
+          ctx.globalAlpha = fade;
+          ctx.strokeStyle = '#fff4cf';
+          ctx.lineWidth = 2 + fade * 2;
+          ctx.beginPath();
+          ctx.moveTo(flare.x - 23, flare.y + 19);
+          ctx.lineTo(flare.x + 20, flare.y - 17);
+          ctx.moveTo(flare.x - 16, flare.y - 20);
+          ctx.lineTo(flare.x + 15, flare.y + 20);
+          ctx.stroke();
+        } else {
+          const radius = flare.type === 'wound' ? 52 * fade : 22 + p * 55;
+          const glow = ctx.createRadialGradient(flare.x, flare.y, 0, flare.x, flare.y, Math.max(1, radius));
+          glow.addColorStop(0, `rgba(255,247,229,${(flare.type === 'wound' ? 0.82 : 0.4) * fade})`);
+          glow.addColorStop(0.32, `rgba(213,42,50,${(flare.type === 'wound' ? 0.44 : 0.3) * fade})`);
+          glow.addColorStop(1, 'rgba(150,12,24,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(flare.x - radius, flare.y - radius, radius * 2, radius * 2);
+        }
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     },

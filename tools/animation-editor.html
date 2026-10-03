@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TBFG Animation Workshop</title>
+  <style>
+    :root { color-scheme: dark; --panel:#1b1a19; --edge:#48413a; --gold:#e8bd72; --muted:#b8aa91; }
+    * { box-sizing:border-box } body { margin:0; background:#11100f; color:#f2e7d1; font:15px system-ui,sans-serif; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#201d19; border-bottom:1px solid var(--edge) }
+    h1 { margin:0; font:20px Georgia,serif; color:var(--gold) } header a { color:var(--gold) }
+    main { display:grid; grid-template-columns:minmax(500px,1fr) 340px; gap:14px; padding:14px; max-width:1600px; margin:auto }
+    .stage,.panel { border:1px solid var(--edge); background:var(--panel); border-radius:8px; overflow:hidden }
+    canvas { display:block; width:100%; height:auto; background:#66513b; image-rendering:auto }
+    .transport { display:flex; align-items:center; gap:8px; padding:12px }
+    .transport input[type=range] { flex:1 }
+    .panel { padding:16px; overflow:visible }
+    label { display:block; color:var(--muted); font-size:13px; margin:14px 0 6px }
+    select,button,input[type=number] { background:#302b25; color:#f2e7d1; border:1px solid #635847; border-radius:4px; padding:8px }
+    select { width:100% } button { cursor:pointer } button:hover { border-color:var(--gold) }
+    .row { display:flex; gap:8px; align-items:center } .row>* { flex:1 }
+    .value { color:var(--gold); font-variant-numeric:tabular-nums; text-align:right; min-width:52px }
+    input[type=range] { width:100%; accent-color:var(--gold) }
+    .check { display:flex; align-items:center; gap:8px; color:#ddd0b9; margin:14px 0 }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px }
+    .primary { background:#6e4c21; border-color:#bc8c48 }
+    .hint { color:#b8aa91; line-height:1.45; font-size:12px; margin-top:16px }
+    #measurement { margin:12px 0; padding:10px; border-left:3px solid var(--gold); background:#25221d; color:#e8dfce; font-size:12px; line-height:1.5; font-variant-numeric:tabular-nums }
+    #status { min-height:18px; color:#b9d4a0; font-size:12px; margin-top:8px }
+    @media(max-width:900px) { main { grid-template-columns:1fr } }
+  </style>
+</head>
+<body>
+  <header><h1>TBFG Animation Workshop</h1><a href="../index.html">Open game</a></header>
+  <main>
+    <section class="stage">
+      <canvas id="preview" width="1280" height="720"></canvas>
+      <div class="transport">
+        <button id="play">▶ Play</button><button id="prev">◀</button><button id="next">▶</button>
+        <input id="timeline" type="range" min="0" max="1" step="1" value="0" aria-label="Animation frame">
+        <span id="frameLabel">1 / 1</span>
+      </div>
+    </section>
+    <aside class="panel">
+      <label for="globalScale">Overall size (both fighters)</label><div class="row"><input id="globalScale" type="range" min="0.4" max="1.2" step="0.01"><span id="globalScaleValue" class="value"></span></div>
+      <div class="row"><div><label for="fighter">Fighter</label><select id="fighter"><option value="p1">Akaoni (P1)</option><option value="p2">Kurogane (P2)</option></select></div>
+      <div><label for="sequence">Animation</label><select id="sequence"></select></div></div>
+      <label for="pose">Frame / pose</label><select id="pose"></select>
+      <div id="measurement" aria-live="polite">Rendered art bounds: loading…</div>
+      <label for="scale">Pose scale</label><div class="row"><input id="scale" type="range" min="0.5" max="1.8" step="0.01"><span id="scaleValue" class="value"></span></div>
+      <label for="offsetX">Horizontal anchor</label><div class="row"><input id="offsetX" type="range" min="-160" max="160" step="1"><span id="offsetXValue" class="value"></span></div>
+      <label for="offsetY">Vertical anchor</label><div class="row"><input id="offsetY" type="range" min="-160" max="160" step="1"><span id="offsetYValue" class="value"></span></div>
+      <label for="duration">Frame duration (ms)</label><div class="row"><input id="duration" type="number" min="40" max="2000" step="10"><span class="value">ms</span></div>
+      <label class="check"><input id="compare" type="checkbox" checked> Show combat idle reference</label>
+      <div class="actions">
+        <button class="primary" id="save">Save to game live</button><button id="export">Export JSON</button>
+        <button id="import">Import JSON</button><button id="resetPose">Reset this pose</button>
+        <button id="resetAll">Reset all</button><input id="file" type="file" accept="application/json" hidden>
+      </div>
+      <div id="status"></div>
+      <p class="hint">Overall size affects both fighters and every pose. Pose scale and X/Y anchor adjust only the selected frame. Breathing frames inherit their parent idle pose’s scale and anchor; only their duration is editable. Frame duration sets its timing share during a synchronized 640 ms attack. Saved values are shared with the game on this browser origin; keep both pages on the same local server address and port.</p>
+    </aside>
+  </main>
+  <script src="animation-editor.js"></script>
+</body>
+</html>

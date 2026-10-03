@@ -51,6 +51,8 @@ button:hover:not(:disabled) {
 button:active:not(:disabled) { transform: translateY(2px); }
 button:disabled { opacity: 0.45; cursor: default; }
 button.big { font-size: 15px; padding: 16px 28px; min-width: 320px; }
+.workshop-link { color: var(--gold-bright); font-size: 9px; letter-spacing: 1px; opacity: .75; text-decoration: none; }
+.workshop-link:hover { opacity: 1; text-decoration: underline; }
 
 /* ---------- title & end screens ---------- */
 #title-screen, #end-screen {
@@ -61,7 +63,7 @@ button.big { font-size: 15px; padding: 16px 28px; min-width: 320px; }
   align-items: center;
   justify-content: center;
   gap: 18px;
-  background: rgba(10, 7, 4, 0.62);
+  background: rgba(10, 7, 4, 0.44);
   text-align: center;
 }
 
@@ -90,22 +92,23 @@ button.big { font-size: 15px; padding: 16px 28px; min-width: 320px; }
 .tagline { font-size: 11px; line-height: 1.9; opacity: 0.85; margin: 0; }
 
 .howto {
-  font-size: 9px;
+  font-size: 8px;
   line-height: 2.1;
   opacity: 0.65;
   margin-top: 10px;
+  max-width: 480px;
 }
 
 .title-char {
   position: absolute;
-  bottom: 0;
-  height: 62%;
+  bottom: 9.7%;
+  height: 45.8%;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.8));
   pointer-events: none;
 }
-.title-char.left { left: 3%; }
-.title-char.right { right: 3%; }
+.title-char.left { left: 19%; }
+.title-char.right { right: 19%; }
 
 #end-portrait {
   height: 40%;
